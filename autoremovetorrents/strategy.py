@@ -165,7 +165,7 @@ class Strategy(object):
                 self._logger.debug('OUTPUT: %d torrent(s) to be removed after applying the condition.' % len(self.remove_list))
                 for torrent in self.remove_list:
                     self._logger.debug(torrent)
-                self._logger.info('OUTPUT: %d torrent(s) to be reannounced after applying the condition.' % len(self.reannounce_list))
+                self._logger.debug('OUTPUT: %d torrent(s) to be reannounced after applying the condition.' % len(self.reannounce_list))
                 for torrent in self.reannounce_list:
                     self._logger.debug(torrent)
 
