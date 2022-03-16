@@ -42,6 +42,7 @@ class Strategy(object):
         # Results
         self.remain_list = set()
         self.remove_list = set()
+        self.reannounce_list = set()
 
         # Filter ALL
         self._all_categories = conf['all_categories'] if 'all_categories' in conf \
@@ -129,6 +130,7 @@ class Strategy(object):
             'seeding_time': SeedingTimeCondition,
             'max_size': SizeCondition,
             'upload_ratio': UploadRatioCondition,
+            'reannounce' : ConditionParser,
         }
         for conf in self._conf:
             if conf in conditions:
@@ -150,7 +152,11 @@ class Strategy(object):
                 
                 # Output
                 self.remain_list = cond.remain
-                self.remove_list.update(cond.remove)
+                if conf == 'reannounce':
+                    self.reannounce_list.update(cond.remove)
+                else:
+                    self.remove_list.update(cond.remove)
+
 
                 # Print updated list to debug log
                 self._logger.debug('OUTPUT: %d torrent(s) to be reserved after applying the condition.' % len(self.remain_list))
@@ -158,6 +164,9 @@ class Strategy(object):
                     self._logger.debug(torrent)
                 self._logger.debug('OUTPUT: %d torrent(s) to be removed after applying the condition.' % len(self.remove_list))
                 for torrent in self.remove_list:
+                    self._logger.debug(torrent)
+                self._logger.info('OUTPUT: %d torrent(s) to be reannounced after applying the condition.' % len(self.reannounce_list))
+                for torrent in self.reannounce_list:
                     self._logger.debug(torrent)
 
     # Execute this strategy
@@ -174,4 +183,8 @@ class Strategy(object):
         if len(self.remove_list) > 0:
             self._logger.info('To be deleted:')
             for torrent in self.remove_list:
+                self._logger.info(torrent)
+        if len(self.reannounce_list) > 0:
+            self._logger.info('To be reannounced:')
+            for torrent in self.reannounce_list:
                 self._logger.info(torrent)

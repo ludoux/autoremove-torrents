@@ -41,6 +41,7 @@ class Task(object):
         # Torrents
         self._torrents = set()
         self._remove = set()
+        self._reannounce = set()
 
         # Client status
         self._client_status = None
@@ -111,6 +112,7 @@ class Task(object):
             strategy = Strategy(strategy_name, self._strategies[strategy_name])
             strategy.execute(self._client_status, self._torrents)
             self._remove.update(strategy.remove_list)
+            self._reannounce.update(strategy.reannounce_list)
 
     # Remove torrents
     def _remove_torrents(self):
@@ -133,14 +135,34 @@ class Task(object):
                 delete_list[torrent['hash']], torrent['reason']
             )
 
+    # Reannounce torrents
+    def _reannounce_torrents(self):
+        # Bulid a dict to store torrent hashes and names which to be deleted
+        reannounce_list = {}
+        for torrent in self._reannounce:
+            reannounce_list[torrent.hash] = torrent.name
+        # Run deletion
+        success, failed = self._client.reannounce_torrents([hash_ for hash_ in reannounce_list])
+        # Output logs
+        for hash_ in success:
+            self._logger.info(
+                'The torrent %s have been reannounced.' ,
+                reannounce_list[hash_]
+            )
+        for torrent in failed:
+            self._logger.error('The torrent %s cannot be reannounced. Reason: %s' ,
+                reannounce_list[torrent['hash']], torrent['reason']
+            )
+
     # Execute
     def execute(self):
-        self._logger.info("Running task '%s'..." % self._name)
+        self._logger.info(" task '%s'..." % self._name)
         self._login()
         self._get_torrents()
         self._apply_strategies()
         if self._enabled_remove:
             self._remove_torrents()
+        self._reannounce_torrents()
 
     # Get remaining torrents (for tester)
     def get_remaining_torrents(self):

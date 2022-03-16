@@ -117,6 +117,11 @@ class qBittorrent(object):
         def delete_torrents_and_data(self, torrent_hash_list):
             return self._session.get(self._host+'/api/v2/torrents/delete', params={'hashes':'|'.join(torrent_hash_list), 'deleteFiles': True})
 
+        # Batch Reannounce torrents
+        def reannounce_torrents(self, torrent_hash_list):
+            return self._session.get(self._host+'/api/v2/torrents/reannounce', params={'hashes':'|'.join(torrent_hash_list)})
+            
+
     def __init__(self, host):
         # Logger
         self._logger = logger.Logger.register(__name__)
@@ -274,6 +279,19 @@ class qBittorrent(object):
     def remove_torrents(self, torrent_hash_list, remove_data):
         request = self._request_handler.delete_torrents_and_data(torrent_hash_list) if remove_data \
             else self._request_handler.delete_torrents(torrent_hash_list)
+        if request.status_code != 200:
+            return ([], [{
+                'hash': torrent,
+                'reason': 'The server responses HTTP %d.' % request.status_code,
+            } for torrent in torrent_hash_list])
+        # Some of them may fail but we can't judge them,
+        # So we consider all of them as successful.
+        return (torrent_hash_list, [])
+
+    # Batch Reannounce Torrents
+    # Return values: (success_hash_list, failed_list -> {hash: reason, ...})
+    def reannounce_torrents(self, torrent_hash_list):
+        request = self._request_handler.reannounce_torrents(torrent_hash_list)
         if request.status_code != 200:
             return ([], [{
                 'hash': torrent,
